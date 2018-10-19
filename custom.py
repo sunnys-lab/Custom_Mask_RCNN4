@@ -16,13 +16,13 @@ Usage: import the module (see Jupyter notebooks for examples), or run from
     python3 custom.py train --dataset=customimages --weights=coco
 
     # Resume training a model that you had trained earlier
-    python3 custom.py train --dataset=/path/to/balloon/dataset --weights=last
+    python3 custom.py train --dataset=customimages --weights=last
 
     # Train a new model starting from ImageNet weights
-    python3 custom.py train --dataset=/path/to/balloon/dataset --weights=imagenet
+    python3 custom.py train --dataset=customimages --weights=imagenet
 
     # Apply color splash to an image
-    python3 custom.py splash --weights=trained_file.h5 --image=<URL or path to file>
+    python3 custom.py splash --weights=mask_rcnn_damage_0010.h5 --image=results/image65.jpg
 
     # Apply color splash to video using the last weights you trained
     python3 custom.py splash --weights=last --video=<URL or path to file>
