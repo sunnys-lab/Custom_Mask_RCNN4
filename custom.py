@@ -13,19 +13,19 @@ Usage: import the module (see Jupyter notebooks for examples), or run from
        the command line as such:
 
     # Train a new model starting from pre-trained COCO weights
-    python3 custom.py train --dataset=customimages --weights=coco
+    python3 custom.py train --dataset=customimages2 --weights=coco
 
     # Resume training a model that you had trained earlier
-    python3 custom.py train --dataset=customimages --weights=last
+    python3 custom.py train --dataset=customimages2 --weights=last
 
     # Train a new model starting from ImageNet weights
-    python3 custom.py train --dataset=customimages --weights=imagenet
+    python3 custom.py train --dataset=customimages2 --weights=imagenet
 
     # Apply color splash to an image
-    python3 custom.py splash --weights=mask_rcnn_damage_0010.h5 --image=results/image65.jpg
+    python3 custom.py splash --weights=mask_rcnn_toy_0003.h5 --image=results/toy26.jpg
 
     # Apply color splash to video using the last weights you trained
-    python3 custom.py splash --weights=last --video=<URL or path to file>
+    python3 custom.py splash --weights=mask_rcnn_toy_0003.h5 --video=toy_avi.avi
 """
 
 import os
@@ -46,6 +46,7 @@ ROOT_DIR = os.getcwd()
 sys.path.append(ROOT_DIR)  # To find local version of the library
 from mrcnn.config import Config
 from mrcnn import model as modellib, utils
+from mrcnn import visualize
 
 # Path to trained weights file
 COCO_WEIGHTS_PATH = os.path.join(ROOT_DIR, "mask_rcnn_coco.h5")
@@ -64,7 +65,7 @@ class CustomConfig(Config):
     Derives from the base Config class and overrides some values.
     """
     # Give the configuration a recognizable name
-    NAME = "damage"
+    NAME = "toy"
 
     # We use a GPU with 12GB memory, which can fit two images.
     # Adjust down if you use a smaller GPU.
@@ -93,7 +94,7 @@ class CustomDataset(utils.Dataset):
         subset: Subset to load: train or val
         """
         # Add classes. We have only one class to add.
-        self.add_class("damage", 1, "damage")
+        self.add_class("toy", 1, "toy")
 
         # Train or validation dataset?
         assert subset in ["train", "val"]
@@ -138,7 +139,7 @@ class CustomDataset(utils.Dataset):
             height, width = image.shape[:2]
 
             self.add_image(
-                "damage",  ## for a single class just add the name here
+                "toy",  ## for a single class just add the name here
                 image_id=a['filename'],  # use file name as a unique image id
                 path=image_path,
                 width=width, height=height,
@@ -153,7 +154,7 @@ class CustomDataset(utils.Dataset):
         """
         # If not a balloon dataset image, delegate to parent class.
         image_info = self.image_info[image_id]
-        if image_info["source"] != "damage":
+        if image_info["source"] != "toy":
             return super(self.__class__, self).load_mask(image_id)
 
         # Convert polygons to a bitmap mask of shape
@@ -173,7 +174,7 @@ class CustomDataset(utils.Dataset):
     def image_reference(self, image_id):
         """Return the path of the image."""
         info = self.image_info[image_id]
-        if info["source"] == "damage":
+        if info["source"] == "toy":
             return info["path"]
         else:
             super(self.__class__, self).image_reference(image_id)
@@ -211,19 +212,23 @@ def color_splash(image, mask):
     """
     # Make a grayscale copy of the image. The grayscale copy still
     # has 3 RGB channels, though.
-    gray = skimage.color.gray2rgb(skimage.color.rgb2gray(image)) * 255
+    gray = skimage.color.gray2rgb(skimage.color.gray2rgb(image)) * 255
     # We're treating all instances as one, so collapse the mask into one layer
     mask = (np.sum(mask, -1, keepdims=True) >= 1)
     # Copy color pixels from the original color image where mask is set
     if mask.shape[0] > 0:
         splash = np.where(mask, image, gray).astype(np.uint8)
+        #splash = gray
     else:
         splash = gray
+        #splash = np.where(mask, image, gray).astype(np.uint8)
     return splash
 
 
 def detect_and_color_splash(model, image_path=None, video_path=None):
     assert image_path or video_path
+
+    class_names = ['BG','toy']
 
     # Image or video?
     if image_path:
@@ -233,11 +238,13 @@ def detect_and_color_splash(model, image_path=None, video_path=None):
         image = skimage.io.imread(args.image)
         # Detect objects
         r = model.detect([image], verbose=1)[0]
+        visualize.display_instances(image, r['rois'],r['masks'],r['class_ids'],class_names,r['scores'])
         # Color splash
-        splash = color_splash(image, r['masks'])
+        #splash = color_splash(image, r['masks'])
+
         # Save output
-        file_name = "splash_{:%Y%m%dT%H%M%S}.png".format(datetime.datetime.now())
-        skimage.io.imsave(file_name, splash)
+        #file_name = "splash_{:%Y%m%dT%H%M%S}.png".format(datetime.datetime.now())
+        #skimage.io.imsave(file_name, splash)
     elif video_path:
         import cv2
         # Video capture
