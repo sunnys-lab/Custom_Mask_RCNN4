@@ -238,13 +238,15 @@ def detect_and_color_splash(model, image_path=None, video_path=None):
         image = skimage.io.imread(args.image)
         # Detect objects
         r = model.detect([image], verbose=1)[0]
-        visualize.display_instances(image, r['rois'],r['masks'],r['class_ids'],class_names,r['scores'])
+
         # Color splash
         #splash = color_splash(image, r['masks'])
+        splash = visualize.display_instances(image, r['rois'], r['masks'], r['class_ids'], class_names, r['scores'])
 
         # Save output
-        #file_name = "splash_{:%Y%m%dT%H%M%S}.png".format(datetime.datetime.now())
-        #skimage.io.imsave(file_name, splash)
+        file_name = "splash_{:%Y%m%dT%H%M%S}.png".format(datetime.datetime.now())
+        skimage.io.imsave(file_name, splash)
+
     elif video_path:
         import cv2
         # Video capture
@@ -270,10 +272,13 @@ def detect_and_color_splash(model, image_path=None, video_path=None):
                 image = image[..., ::-1]
                 # Detect objects
                 r = model.detect([image], verbose=0)[0]
+                splash = visualize.display_instances(image, r['rois'], r['masks'], r['class_ids'], class_names,r['scores'])
+
                 # Color splash
-                splash = color_splash(image, r['masks'])
+                #splash = color_splash(image, r['masks'])
                 # RGB -> BGR to save image to video
                 splash = splash[..., ::-1]
+
                 # Add image to video writer
                 vwriter.write(splash)
                 count += 1
