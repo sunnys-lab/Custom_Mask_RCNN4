@@ -18,9 +18,6 @@ Usage: import the module (see Jupyter notebooks for examples), or run from
     # Resume training a model that you had trained earlier
     python3 custom.py train --dataset=customimages2 --weights=last
 
-    # Train a new model starting from ImageNet weights
-    python3 custom.py train --dataset=customimages2 --weights=imagenet
-
     # Apply color splash to an image
     python3 custom.py splash --weights=mask_rcnn_toy_0003.h5 --image=results/toy26.jpg
 
